@@ -1,0 +1,25 @@
+{
+	"look_back": 12,
+	"n_features": 248,
+    "n_manips": 74,
+    "n_targs": 1,
+	"horizon": 12,
+
+	"key_dim": 62,
+	"num_heads": 4,
+	"ff_dim": 10,
+	"ff_activ": "gelu",
+	"num_encoders": 1,
+    "num_decoders": 4,
+	"mlp_layers": 1,
+	"mlp_units": 256,
+	"mlp_dropout": 0.6,
+	"mlp_activ": "linear",
+	"dropout": 0.1,
+	"out_activ": "sigmoid",
+
+	"learning_rate": 0.001,
+	"beta_1": 0.9,
+    "beta_2": 0.98,
+    "epsilon": 1e-9
+}
