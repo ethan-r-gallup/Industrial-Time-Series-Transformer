@@ -1,0 +1,1 @@
+{"look_back": 23, "n_features": 247, "n_manips": 74, "n_targs": 1, "horizon": 12, "key_dim": 62, "num_heads": 4, "ff_dim": 10, "ff_activ": "tanh", "num_encoders": 2, "num_decoders": 0, "mlp_layers": 2, "mlp_units": 256, "mlp_dropout": 0.2, "mlp_activ": "linear", "dropout": 0.2, "out_activ": "linear", "learning_rate": 0.001, "beta_1": 0.9, "beta_2": 0.98, "epsilon": 1e-09}
