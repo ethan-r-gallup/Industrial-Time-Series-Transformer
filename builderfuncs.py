@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.math import logical_not, equal
 import keras.backend as k
 from parameterdicts import TransformerParameters, GRUParameters
+from sklearn.metrics import explained_variance_score
 
 
 import pickle
@@ -104,13 +105,21 @@ def loss_func(target, prediction):
     return loss
 
 
+def explained_variance(target, prediction):
+    mask = logical_not(equal(prediction, -1e+9))
+    target = tf.ragged.boolean_mask(target, mask)
+    prediction = tf.ragged.boolean_mask(prediction, mask)
+    ss_res = k.sum(k.square((target-prediction)-k.mean(target-prediction)))
+    ss_tot = k.sum(k.square(target - k.mean(target)))
+    return 1 - ss_res/(ss_tot)
+
 def r2(target, prediction):
     mask = logical_not(equal(prediction, -1e+9))
     target = tf.ragged.boolean_mask(target, mask)
     prediction = tf.ragged.boolean_mask(prediction, mask)
     ss_res = k.sum(k.square(target-prediction))
     ss_tot = k.sum(k.square(target - k.mean(target)))
-    return 1 - ss_res/(ss_tot + k.epsilon())
+    return 1 - ss_res/(ss_tot)
 
 
 def build_encoder(inputs, idx, name, ff_act, num_heads, key_dim, dropout, ff_dim, dynamic=False):
@@ -256,7 +265,7 @@ def build_transformer(parameters: TransformerParameters, name: str = 'Transforme
                                          epsilon=parameters["epsilon"])
 
     # compile the model
-    model.compile(optimizer=optimizer, loss=[loss_func], metrics=[r2])
+    model.compile(optimizer=optimizer, loss=[loss_func], metrics=['mse', 'mae', r2, explained_variance])
     model.build_dict = parameters
     return model
 
@@ -417,7 +426,6 @@ def restore_model(filepath, modeltype):
         model = build_lstm(parameters)
     elif modeltype == "bilstm":
         model = build_bilstm(parameters)
-    print(model.summary())
     model.load_weights(f"{filepath}/weights.h5")
     with open(f"{filepath}/optimizer.pkl", "rb") as f:
         weight_values = pickle.load(f)
