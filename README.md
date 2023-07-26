@@ -1,4 +1,5 @@
 # TSCompare
  
 
-![alt text]([figures/GRU input grad var.pdf](https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/GRU%20input%20grad%20var.pdf)https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/GRU%20input%20grad%20var.pdf)
+
+![GRU input gradients variance](https://github.com/ethan-r-gallup/TSCompare/assets/80715482/8412175f-9add-4945-afc6-dfede2fa1813)
