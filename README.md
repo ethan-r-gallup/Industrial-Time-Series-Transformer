@@ -1,4 +1,4 @@
-<img src="https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/transformer%20new%20poster%20-%20Copy.svg" width="500"/> &ensp; &ensp; &ensp; &ensp; &ensp; &ensp; &ensp; <img src="https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/TSV%20attention%20-%20Copy.svg" width="250"/>
+<img src="https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/transformer%20new%20poster%20-%20Copy.svg" width="500"/><img src="https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/TSV%20attention%20-%20Copy.svg" width="250"/>
 
 ![image](https://github.com/ethan-r-gallup/TSCompare/assets/80715482/faf0558c-9792-4cc5-8a17-98d42cdfcdb1)
 
