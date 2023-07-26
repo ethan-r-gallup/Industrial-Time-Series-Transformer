@@ -1,6 +1,8 @@
 # TSCompare
  
+<object data="[http://yoursite.com/the.pdf](https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/GRU%20input%20grad%20var.pdf)" type="application/pdf" width="700px" height="700px">
+    <embed src="[http://yoursite.com/the.pdf](https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/GRU%20input%20grad%20var.pdf)">
+        <p>This browser does not support PDFs. Please download the PDF to view it: <a href="[http://yoursite.com/the.pdf](https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/GRU%20input%20grad%20var.pdf)https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/GRU%20input%20grad%20var.pdf">Download PDF</a>.</p>
+    </embed>
+</object>
 
-
-![GRU input gradients variance](https://github.com/ethan-r-gallup/TSCompare/assets/80715482/8412175f-9add-4945-afc6-dfede2fa1813)
-![GRU max input gradients](https://github.com/ethan-r-gallup/TSCompare/assets/80715482/bd55045b-7d89-4eb5-9117-53c24befc069)
