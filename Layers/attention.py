@@ -4,7 +4,7 @@ sys.excepthook = ultratb.ColorTB()
 
 from einops import rearrange
 
-from keras.layers import Layer, Input, EinsumDense
+from tensorflow.keras.layers import Layer, Input, EinsumDense
 import tensorflow as tf
 
 class TSMultiHeadAttention(Layer):
