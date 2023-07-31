@@ -1,17 +1,18 @@
-from Layers import TSMultiHeadAttention
-from keras.layers import Dense, Dropout, Input, LayerNormalization, Add, GRU, LSTM, Bidirectional
+from Layers import TSMultiHeadAttention, noiseLayer
+from tensorflow.keras.layers import Dense, Dropout, Input, LayerNormalization, Add, GRU, LSTM, Bidirectional, EinsumDense, AveragePooling2D
 import tensorflow as tf
 from tensorflow.math import logical_not, equal
-import keras.backend as k
+import tensorflow.keras.backend as k
 from parameterdicts import TransformerParameters, GRUParameters
 from sklearn.metrics import explained_variance_score
+import warnings
 
 
 import pickle
 import json
 from numpy import Inf
 import numpy as np
-from keras.callbacks import Callback
+from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.activations import linear, relu, elu, selu, gelu, sigmoid, tanh
 
 acts = {'linear': linear, 'relu': relu, 'elu': elu, 'selu': selu, 'gelu': gelu, 'sigmoid': sigmoid, 'tanh': tanh}
@@ -122,14 +123,14 @@ def r2(target, prediction):
     return 1 - ss_res/(ss_tot)
 
 
-def build_encoder(inputs, idx, name, ff_act, num_heads, key_dim, dropout, ff_dim, dynamic=False):
+def build_encoder(inputs, idx, name, ff_act, num_heads, key_dim, dropout, ff_dim, dynamic=False, positional_encoding=True):
 
     # lookback variable self attention
     attention_input_shapes = [inputs.shape]*3
     x = TSMultiHeadAttention(input_shapes=attention_input_shapes,
                              num_heads=num_heads, 
                              key_dim=key_dim,
-                             positional_encoding=True,
+                             positional_encoding=positional_encoding,
                              dynamic=dynamic,  
                              name=f"{name}encoder_{idx}._attention")(inputs, inputs, inputs)
     x = Dropout(dropout, dynamic=dynamic, name=f"{name}encoder_{idx}.dropout_0")(x)
@@ -148,7 +149,7 @@ def build_encoder(inputs, idx, name, ff_act, num_heads, key_dim, dropout, ff_dim
     
 
 def build_decoder(inputs, labels, enc_out, mask, idx, name,
-                  ff_act, num_heads, key_dim, dropout, ff_dim, dynamic=False):
+                  ff_act, num_heads, key_dim, dropout, ff_dim, dynamic=True, positional_encoding=True):
     
     attention1_input_shapes = [inputs.shape]*3
     attention2_input_shapes = [inputs.shape, enc_out.shape, enc_out.shape]
@@ -180,7 +181,7 @@ def build_decoder(inputs, labels, enc_out, mask, idx, name,
     x = TSMultiHeadAttention(input_shapes=attention1_input_shapes,
                              num_heads=num_heads, 
                              key_dim=key_dim,
-                             positional_encoding=True,
+                             positional_encoding=positional_encoding,
                              dynamic=dynamic, 
                              name=f"{name}decoder_{idx}.attention_1")(inputs, inputs, inputs, attention_mask=mask)
     x = Dropout(dropout, dynamic=dynamic, name=f"{name}decoder_{idx}.dropout_1")(x)
@@ -192,7 +193,7 @@ def build_decoder(inputs, labels, enc_out, mask, idx, name,
     x = TSMultiHeadAttention(input_shapes=attention2_input_shapes,
                              num_heads=num_heads, 
                              key_dim=key_dim,
-                             positional_encoding=True,
+                             positional_encoding=positional_encoding,
                              dynamic=dynamic, 
                              name=f"{name}decoder_{idx}.attention_2")(norm1_out, enc_out, enc_out)
     x = Dropout(dropout, dynamic=dynamic, name=f"{name}decoder_{idx}.dropout_2")(x)
@@ -211,7 +212,7 @@ def build_decoder(inputs, labels, enc_out, mask, idx, name,
     return out
 
 
-def build_transformer(parameters: TransformerParameters, name: str = 'Transformer', dynamic:bool = False) -> tf.keras.Model:
+def build_transformer(parameters: TransformerParameters, name: str = 'Transformer', dynamic:bool = False, positional_encoding=True) -> tf.keras.Model:
 
     # initialize the inputs
     encoder_input = Input(shape=(parameters["look_back"], parameters["n_features"]), 
@@ -222,8 +223,13 @@ def build_transformer(parameters: TransformerParameters, name: str = 'Transforme
                           name=f"{name}decoder_label")
     attention_mask = Input(shape=(1, parameters["horizon"], parameters["horizon"]),
                           name=f"{name}attention_mask")
-    x_enc, x_dec, y_dec = encoder_input, decoder_input, decoder_label
-        
+    x_dec = noiseLayer(0, 0.01, [parameters["horizon"], parameters["n_manips"]], [[0, 12], [72, 74]])(decoder_input)
+    if parameters["look_back"] == 12:
+        x_enc = encoder_input 
+    elif parameters["look_back"] == 23:
+        x_enc = noiseLayer(0, 0.01, [parameters["look_back"], parameters["n_features"]], [[11, 23], [72, 74]])(encoder_input)
+    y_dec = decoder_label
+
     # Set up the encoder
     for i in range(parameters["num_encoders"]):
         x_enc = build_encoder(x_enc, i, name,
@@ -232,7 +238,8 @@ def build_transformer(parameters: TransformerParameters, name: str = 'Transforme
                               parameters["key_dim"],
                               parameters["dropout"],
                               parameters["ff_dim"],
-                              dynamic=dynamic)
+                              dynamic=dynamic,
+                              positional_encoding=positional_encoding)
 
     mask = tf.cast(attention_mask, tf.bool, name=f"{name}mask_cast1")
 
@@ -244,8 +251,14 @@ def build_transformer(parameters: TransformerParameters, name: str = 'Transforme
                               parameters["key_dim"],
                               parameters["dropout"],
                               parameters["ff_dim"],
-                              dynamic=dynamic)
-    
+                              dynamic=dynamic,
+                              positional_encoding=positional_encoding)
+        
+    if parameters["num_decoders"] == 0:
+        from einops import rearrange
+        x_enc = rearrange(x_enc, "b t f -> b f t")
+        x_dec = rearrange(Dense(units=12)(x_enc), "b f t -> b t f")
+
     # Set up the "multi-layer perceptron"
     for i in range(parameters["mlp_layers"]):
         x_dec = Dense(parameters["mlp_units"], activation=acts[parameters["mlp_activ"]], dynamic=dynamic, name=f"{name}mlp_dense{i}")(x_dec)
@@ -416,19 +429,28 @@ def save_whole_model(model, filepath):
 def restore_model(filepath, modeltype):
     with open(f"{filepath}/parameters.json") as f:
         parameters = json.load(f)
-    if modeltype == "transformer":
-        model = build_transformer(parameters)
-    elif modeltype == "gru":
-        model = build_gru(parameters)
-    elif modeltype == "bigru":
-        model = build_bigru(parameters)
-    elif modeltype == "lstm":
-        model = build_lstm(parameters)
-    elif modeltype == "bilstm":
-        model = build_bilstm(parameters)
-    model.load_weights(f"{filepath}/weights.h5")
     with open(f"{filepath}/optimizer.pkl", "rb") as f:
         weight_values = pickle.load(f)
+    if modeltype == "transformer":
+        try:
+            model = build_transformer(parameters, positional_encoding=True)
+            model.load_weights(f"{filepath}/weights.h5")
+        except ValueError:
+            warnings.warn("Model weights could not be loaded properly with positional embeddings. Loading without embeddings.")
+            model = build_transformer(parameters, positional_encoding=False)
+            model.load_weights(f"{filepath}/weights.h5")
+    elif modeltype == "gru":
+        model = build_gru(parameters)
+        model.load_weights(f"{filepath}/weights.h5")
+    elif modeltype == "bigru":
+        model = build_bigru(parameters)
+        model.load_weights(f"{filepath}/weights.h5")
+    elif modeltype == "lstm":
+        model = build_lstm(parameters)
+        model.load_weights(f"{filepath}/weights.h5")
+    elif modeltype == "bilstm":
+        model = build_bilstm(parameters)
+        model.load_weights(f"{filepath}/weights.h5")
 
     # use fake gradient to let optimizer init the wieghts.
     grad_vars = model.trainable_weights
