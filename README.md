@@ -4,7 +4,7 @@ A novel transformer was developed to increase prediction speed and accuracy duri
 - The input to the decoder in neural machine translation is usually its own output. In this model, the optimizers manipulated variables and predicted MW are the inputs to the decoder.
 - A global Embedding layer, inspired by vision transformers, was added to the attention mechanism to allow the model to easily draw connections between variables across time steps (Ramachandran et al. 2019).
 
-The novel attention architecture is shown in Figure 1 and the transformer architecture is shown in figure 2
+The novel transformer architecture is shown in Figure 1 and the attention architecture is shown in figure 2
 
 <img src="https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/transformer%20new%20poster%20-%20Copy.svg" width="500"/><img src="https://github.com/ethan-r-gallup/TSCompare/blob/main/figures/TSV%20attention%20-%20Copy.svg" width="250"/>
 
