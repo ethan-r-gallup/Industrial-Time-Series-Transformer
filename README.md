@@ -35,6 +35,11 @@ This problem can be addressed relatively easily by applying a dropout mask to th
 
 Another interesting note is that the traditional time series transformer developed by Dr. Park does not have a decoder. This increases the computation speed but does not provide the ability to artificially weight the contributions of the optimizers control decisions.
 
+## Pending Updates
+- Finishing optimization of models trained with artificial noise.
+- Rebuild data pipeline to pull testing data from the same dataset as training data and split it in the code.
+- Add results from encoder-decoder recurrent models.
+
 ## References
 Park J. (2022). Hybrid Machine Learning and Physics-Based Modeling Approaches for Process Control and Optimization (dissertation). 
 
