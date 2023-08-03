@@ -39,6 +39,9 @@ Another interesting note is that the traditional time series transformer develop
 - Finishing optimization of models trained with artificial noise.
 - Rebuild data pipeline to pull testing data from the same dataset as training data and split it in the code.
 - Add results from encoder-decoder recurrent models.
+- Permutation importance for the inputs of each model.
+- Closed loop demo.
+- Data for control performance on plant.
 
 ## References
 Park J. (2022). Hybrid Machine Learning and Physics-Based Modeling Approaches for Process Control and Optimization (dissertation). 
