@@ -45,7 +45,7 @@ class TSMultiHeadAttention(Layer):
         self.v_dense = EinsumDense('btf,fhd->bthd', output_shape=[input_shape[-2], self._num_heads, self._dim], bias_axes='hd', name=f'{self.name}_vdense')
         if self.positional_encoding:
             # Q[batches, tokens, heads, dim], Weights[features, dim] -> QR[batches, heads, tokens, tokens]
-            self.qr_dense = EinsumDense('bihd,jd->bhij', output_shape=[self._num_heads, input_shape[-2], input_shape[-2]], bias_axes='hij', name=f'{self.name}_qrdense')
+            self.qr_dense = EinsumDense('bihd,jhd->bhij', output_shape=[self._num_heads, input_shape[-2], input_shape[-2]], bias_axes='hij', name=f'{self.name}_qrdense')
         # out[batches, tokens, heads, dim], Weights[heads, dim, features] -> output[batches, tokens, features]
         self.Wo = EinsumDense('bthd,hdf->btf', output_shape=[input_shape[-2], input_shape[-1]], bias_axes='f', name=f'{self.name}_Wo')
         
